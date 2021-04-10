@@ -7,8 +7,10 @@ import com.codinginflow.mvvmnewsapp.databinding.ActivityMainBinding
 import com.codinginflow.mvvmnewsapp.features.bookmarks.BookmarksFragment
 import com.codinginflow.mvvmnewsapp.features.breakingnews.BreakingNewsFragment
 import com.codinginflow.mvvmnewsapp.features.searchnews.SearchNewsFragment
+import dagger.hilt.android.AndroidEntryPoint
 import java.lang.IllegalArgumentException
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
