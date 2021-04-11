@@ -17,10 +17,10 @@ constructor(
 
     fun getBreakingNews(): Flow<Resource<List<NewsArticle>>> =
         networkBoundResource(
-            query = {
+            queryFromCache = {
                 newsArticleDao.getAllBreakingNewsArticles()
             },
-            fetch = {
+            fetchFromNetwork = {
                 val response = newsApi.getBreakingNews()
                 response.articles
             },

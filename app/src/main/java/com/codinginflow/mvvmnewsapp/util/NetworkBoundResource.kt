@@ -7,32 +7,32 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-inline fun <ResultType, RequestType> networkBoundResource(
-    crossinline query: () -> Flow<ResultType>,
-    crossinline fetch: suspend () -> RequestType,
-    crossinline saveFetchResult: suspend (RequestType) -> Unit,
-    crossinline shouldFetch: (ResultType) -> Boolean = { true }
+inline fun <CacheResult, NetworkResult> networkBoundResource(
+    crossinline queryFromCache: () -> Flow<CacheResult>,
+    crossinline fetchFromNetwork: suspend () -> NetworkResult,
+    crossinline saveFetchResult: suspend (NetworkResult) -> Unit,
+    crossinline shouldFetch: (CacheResult) -> Boolean = { true }
 ) = channelFlow {
 
-    val data = query().first()
+    val data = queryFromCache().first()
 
     if (shouldFetch(data)) {
         val loading = launch {
-            query().collect {
+            queryFromCache().collect {
                 send(Resource.Loading(it))
             }
         }
 
         try {
             delay(2000)
-            saveFetchResult(fetch())
+            saveFetchResult(fetchFromNetwork())
             loading.cancel()
-            query().collect {
+            queryFromCache().collect {
                 send(Resource.Success(it))
             }
         } catch (t: Throwable) {
             loading.cancel()
-            query().collect {
+            queryFromCache().collect {
                 send(Resource.Error(t, it))
             }
         }
