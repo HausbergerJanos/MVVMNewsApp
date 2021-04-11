@@ -1,6 +1,9 @@
 package com.codinginflow.mvvmnewsapp.features.breakingnews
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -9,11 +12,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.codinginflow.mvvmnewsapp.R
 import com.codinginflow.mvvmnewsapp.databinding.FragmentBreakingNewsBinding
+import com.codinginflow.mvvmnewsapp.features.breakingnews.BreakingNewsViewModel.Event.*
 import com.codinginflow.mvvmnewsapp.shared.NewsArticleListAdapter
 import com.codinginflow.mvvmnewsapp.util.Resource
+import com.codinginflow.mvvmnewsapp.util.exhaustive
+import com.codinginflow.mvvmnewsapp.util.showSnackbar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class BreakingNewsFragment : Fragment(R.layout.fragment_breaking_news) {
@@ -50,6 +55,50 @@ class BreakingNewsFragment : Fragment(R.layout.fragment_breaking_news) {
                     newsArticleAdapter.submitList(result.data)
                 }
             }
+
+            viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        is ShowErrorMessage -> showSnackbar(
+                            message = getString(R.string.could_not_refresh,
+                                event.error.localizedMessage
+                                    ?: getString(R.string.unknown_error_occurred)
+                            )
+                        )
+                        is ScrollToTopEvent -> {
+                            recyclerView.scrollToPosition(0)
+                        }
+                    }.exhaustive
+                }
+            }
+
+            swipeRefreshLayout.setOnRefreshListener {
+                viewModel.onManualRefresh()
+            }
+
+            buttonRetry.setOnClickListener {
+                viewModel.onManualRefresh()
+            }
         }
+
+        setHasOptionsMenu(true)
     }
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.onStart()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.menu_breaking_news, menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean =
+        when (item.itemId) {
+            R.id.action_refresh -> {
+                viewModel.onManualRefresh()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
 }
