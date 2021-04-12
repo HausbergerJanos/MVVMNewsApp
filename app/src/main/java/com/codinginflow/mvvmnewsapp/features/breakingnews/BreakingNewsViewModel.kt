@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.codinginflow.mvvmnewsapp.data.NewsRepository
 import com.codinginflow.mvvmnewsapp.features.breakingnews.BreakingNewsViewModel.Event.*
+import com.codinginflow.mvvmnewsapp.features.breakingnews.BreakingNewsViewModel.Refresh.*
 import com.codinginflow.mvvmnewsapp.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
@@ -18,13 +20,14 @@ class BreakingNewsViewModel @Inject constructor(
     private val eventChannel = Channel<Event>()
     val events = eventChannel.receiveAsFlow()
 
-    private val refreshTriggerChannel = Channel<Unit>()
+    private val refreshTriggerChannel = Channel<Refresh>()
     private val refreshTrigger = refreshTriggerChannel.receiveAsFlow()
 
-    val breakingNews = refreshTrigger.flatMapLatest {
+    val breakingNews = refreshTrigger.flatMapLatest { refresh ->
         repository.getBreakingNews(
+            forceRefresh = refresh == FORCE,
             onFetchSuccess = {
-                viewModelScope.launch { eventChannel.send(ScrollToTopEvent) }
+                viewModelScope.launch { eventChannel.send(FetchedSuccessfully) }
             },
             onFetchFailed = { throwable ->
                 viewModelScope.launch { eventChannel.send(ShowErrorMessage(throwable)) }
@@ -32,10 +35,18 @@ class BreakingNewsViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
+    init {
+        viewModelScope.launch {
+            repository.deleteNonBookmarkedArticlesOlderThan(
+                timestampInMillis = TimeUnit.DAYS.toMillis(7)
+            )
+        }
+    }
+
     fun onStart() {
         if (breakingNews.value !is Resource.Loading) {
             viewModelScope.launch {
-                refreshTriggerChannel.send(Unit)
+                refreshTriggerChannel.send(NORMAL)
             }
         }
     }
@@ -43,13 +54,17 @@ class BreakingNewsViewModel @Inject constructor(
     fun onManualRefresh() {
         if (breakingNews.value !is Resource.Loading) {
             viewModelScope.launch {
-                refreshTriggerChannel.send(Unit)
+                refreshTriggerChannel.send(FORCE)
             }
         }
     }
 
+    enum class Refresh {
+        FORCE, NORMAL
+    }
+
     sealed class Event {
         data class ShowErrorMessage(val error: Throwable) : Event()
-        object ScrollToTopEvent : Event()
+        object FetchedSuccessfully : Event()
     }
 }

@@ -65,7 +65,7 @@ class BreakingNewsFragment : Fragment(R.layout.fragment_breaking_news) {
                                     ?: getString(R.string.unknown_error_occurred)
                             )
                         )
-                        is ScrollToTopEvent -> {
+                        is FetchedSuccessfully -> {
                             recyclerView.scrollToPosition(0)
                         }
                     }.exhaustive

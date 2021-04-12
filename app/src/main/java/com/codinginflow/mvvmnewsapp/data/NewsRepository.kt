@@ -7,6 +7,7 @@ import com.codinginflow.mvvmnewsapp.util.networkBoundResource
 import kotlinx.coroutines.flow.Flow
 import retrofit2.HttpException
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class NewsRepository
@@ -18,6 +19,7 @@ constructor(
     private val newsArticleDao = newsArticleDb.newsArticleDao()
 
     fun getBreakingNews(
+        forceRefresh: Boolean,
         onFetchSuccess: () -> Unit,
         onFetchFailed: (Throwable) -> Unit
     ): Flow<Resource<List<NewsArticle>>> =
@@ -50,6 +52,19 @@ constructor(
                     newsArticleDao.insertBreakingNews(breakingNews)
                 }
             },
+            shouldFetch = { cachedArticles ->
+                if (forceRefresh) {
+                    true
+                } else {
+                    val sortedArticles = cachedArticles.sortedBy { article ->
+                        article.updatedAt
+                    }
+
+                    val oldestTimeStamp = sortedArticles.firstOrNull()?.updatedAt
+
+                    oldestTimeStamp == null || oldestTimeStamp < System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5)
+                }
+            },
             onFetchSuccess = onFetchSuccess,
             onFetchFailed = { throwable ->
                 if (throwable !is HttpException && throwable !is IOException) {
@@ -58,4 +73,8 @@ constructor(
                 onFetchFailed(throwable)
             }
         )
+
+    suspend fun deleteNonBookmarkedArticlesOlderThan(timestampInMillis: Long) {
+        newsArticleDao.deleteNonBookmarkedArticlesOlderThan(timestampInMillis)
+    }
 }
