@@ -5,6 +5,7 @@ import com.codinginflow.mvvmnewsapp.api.NewsApi
 import com.codinginflow.mvvmnewsapp.util.Resource
 import com.codinginflow.mvvmnewsapp.util.networkBoundResource
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import retrofit2.HttpException
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -32,13 +33,19 @@ constructor(
                 response.articles
             },
             saveFetchResult = { serverBreakingNewsArticles ->
+                val bookmarkedArticle = newsArticleDao.getAllBookmarkedArticles().first()
+
                 val breakingNewsArticles =
                     serverBreakingNewsArticles.map { serverBreakingNewsArticle ->
+                        val isBookmarked = bookmarkedArticle.any { bookmarkedArticle ->
+                            bookmarkedArticle.url == serverBreakingNewsArticle.url
+                        }
+
                         NewsArticle(
                             title = serverBreakingNewsArticle.title,
                             url = serverBreakingNewsArticle.url,
                             thumbnailUrl = serverBreakingNewsArticle.urlToImage,
-                            isBookmarked = false
+                            isBookmarked = isBookmarked
                         )
                     }
 
@@ -62,7 +69,9 @@ constructor(
 
                     val oldestTimeStamp = sortedArticles.firstOrNull()?.updatedAt
 
-                    oldestTimeStamp == null || oldestTimeStamp < System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5)
+                    oldestTimeStamp == null || oldestTimeStamp < System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(
+                        5
+                    )
                 }
             },
             onFetchSuccess = onFetchSuccess,
@@ -74,7 +83,18 @@ constructor(
             }
         )
 
+    fun getAllBookmarkedArticles(): Flow<List<NewsArticle>> =
+        newsArticleDao.getAllBookmarkedArticles()
+
     suspend fun deleteNonBookmarkedArticlesOlderThan(timestampInMillis: Long) {
         newsArticleDao.deleteNonBookmarkedArticlesOlderThan(timestampInMillis)
+    }
+
+    suspend fun updateArticle(article: NewsArticle) {
+        newsArticleDao.updateArticle(article)
+    }
+
+    suspend fun resetAllBookmarks() {
+        newsArticleDao.resetAllBookmarks()
     }
 }

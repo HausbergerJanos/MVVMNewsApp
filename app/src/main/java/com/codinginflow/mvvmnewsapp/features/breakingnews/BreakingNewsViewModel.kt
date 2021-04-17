@@ -2,6 +2,7 @@ package com.codinginflow.mvvmnewsapp.features.breakingnews
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.codinginflow.mvvmnewsapp.data.NewsArticle
 import com.codinginflow.mvvmnewsapp.data.NewsRepository
 import com.codinginflow.mvvmnewsapp.features.breakingnews.BreakingNewsViewModel.Event.*
 import com.codinginflow.mvvmnewsapp.features.breakingnews.BreakingNewsViewModel.Refresh.*
@@ -56,6 +57,14 @@ class BreakingNewsViewModel @Inject constructor(
             viewModelScope.launch {
                 refreshTriggerChannel.send(FORCE)
             }
+        }
+    }
+
+    fun onBookmarkClick(article: NewsArticle) {
+        val currentlyBookmarked = article.isBookmarked
+        val updatedArticle = article.copy(isBookmarked = !currentlyBookmarked)
+        viewModelScope.launch {
+            repository.updateArticle(updatedArticle)
         }
     }
 
