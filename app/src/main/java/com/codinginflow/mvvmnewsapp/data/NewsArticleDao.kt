@@ -1,5 +1,6 @@
 package com.codinginflow.mvvmnewsapp.data
 
+import androidx.paging.PagingSource
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 
@@ -14,6 +15,9 @@ interface NewsArticleDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSearchResults(searchResults: List<SearchResult>)
+
+    @Query("SELECT * FROM search_results INNER JOIN news_articles ON articleUrl = url WHERE searchQuery = :query ORDER BY queryPosition")
+    fun getSearchResultArticlesPaged(query: String): PagingSource<Int, NewsArticle>
 
     @Query("SELECT MAX(queryPosition) FROM search_results WHERE searchQuery = :searchQuery")
     suspend fun getLastQueryPosition(searchQuery: String): Int?

@@ -1,5 +1,8 @@
 package com.codinginflow.mvvmnewsapp.data
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.room.withTransaction
 import com.codinginflow.mvvmnewsapp.api.NewsApi
 import com.codinginflow.mvvmnewsapp.util.Resource
@@ -82,6 +85,22 @@ constructor(
                 onFetchFailed(throwable)
             }
         )
+
+    fun getSearchResultsPaged(query: String) : Flow<PagingData<NewsArticle>> =
+        Pager(
+            config = PagingConfig(
+                pageSize = 10,
+                maxSize = 200
+            ),
+            remoteMediator = SearchNewsRemoteMediator(
+                searchQuery = query,
+                newsApi = newsApi,
+                newsArticleDb = newsArticleDb
+            ),
+            pagingSourceFactory = {
+                newsArticleDao.getSearchResultArticlesPaged(query)
+            }
+        ).flow
 
     fun getAllBookmarkedArticles(): Flow<List<NewsArticle>> =
         newsArticleDao.getAllBookmarkedArticles()
