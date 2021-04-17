@@ -12,6 +12,12 @@ interface NewsArticleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBreakingNews(breakingNews: List<BreakingNews>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSearchResults(searchResults: List<SearchResult>)
+
+    @Query("SELECT MAX(queryPosition) FROM search_results WHERE searchQuery = :searchQuery")
+    suspend fun getLastQueryPosition(searchQuery: String): Int?
+
     @Query("SELECT * FROM breaking_news INNER JOIN news_articles ON articleUrl = url")
     fun getAllBreakingNewsArticles(): Flow<List<NewsArticle>>
 
@@ -23,6 +29,9 @@ interface NewsArticleDao {
 
     @Query("UPDATE news_articles SET isBookmarked = 0")
     suspend fun resetAllBookmarks()
+
+    @Query("DELETE FROM search_results WHERE searchQuery = :query")
+    suspend fun deleteSearchResultsForQuery(query: String)
 
     @Query("DELETE FROM breaking_news")
     suspend fun deleteAllBreakingNews()
