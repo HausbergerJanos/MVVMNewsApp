@@ -99,6 +99,8 @@ class BreakingNewsFragment : Fragment(R.layout.fragment_breaking_news) {
     override fun onStart() {
         super.onStart()
         viewModel.onStart()
+        viewModel.onStart()
+        viewModel.onStart()
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

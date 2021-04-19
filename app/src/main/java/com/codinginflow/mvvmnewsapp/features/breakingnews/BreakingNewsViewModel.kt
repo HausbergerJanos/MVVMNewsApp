@@ -24,14 +24,14 @@ class BreakingNewsViewModel @Inject constructor(
     private val refreshTriggerChannel = Channel<Refresh>()
     private val refreshTrigger = refreshTriggerChannel.receiveAsFlow()
 
-    val breakingNews = refreshTrigger.flatMapLatest { refresh ->
+    val breakingNews = refreshTrigger.flatMapLatest { refresh  ->
         repository.getBreakingNews(
             forceRefresh = refresh == FORCE,
             onFetchSuccess = {
                 viewModelScope.launch { eventChannel.send(FetchedSuccessfully) }
             },
-            onFetchFailed = { throwable ->
-                viewModelScope.launch { eventChannel.send(ShowErrorMessage(throwable)) }
+            onFetchFailed = {
+                viewModelScope.launch { eventChannel.send(ShowErrorMessage(it)) }
             }
         )
     }.stateIn(viewModelScope, SharingStarted.Lazily, null)

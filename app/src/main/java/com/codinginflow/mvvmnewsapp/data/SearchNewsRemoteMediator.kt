@@ -44,7 +44,7 @@ class SearchNewsRemoteMediator(
 
             val searchResultArticles = networkSearchResults.map { networkNewsArticle ->
                 val isBookmarked = bookmarkedArticles.any { cachedBookmarkedArticle ->
-                    networkNewsArticle.url == cachedBookmarkedArticle.url
+                    cachedBookmarkedArticle.url == networkNewsArticle.url
                 }
 
                 NewsArticle(
