@@ -19,6 +19,13 @@ constructor(
 
     private val currentQuery = MutableStateFlow<String?>(null)
 
+    val hasCurrentQuery = currentQuery.map { it != null }
+
+    var refreshInProgress = false
+    var pendingScrollToTopAfterRefresh = false
+    var pendingScrollToTopAfterNewQuery = false
+    var newQueryInProgress = false
+
     val searchResults = currentQuery.flatMapLatest { query ->
         query?.let {
             repository.getSearchResultsPaged(it)
@@ -27,6 +34,8 @@ constructor(
 
     fun onSearchQuerySubmit(query: String) {
         currentQuery.value = query
+        newQueryInProgress = true
+        pendingScrollToTopAfterNewQuery = true
     }
 
     fun onBookmarkClick(article: NewsArticle) {

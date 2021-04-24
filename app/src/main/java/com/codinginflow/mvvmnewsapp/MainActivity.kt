@@ -68,7 +68,14 @@ class MainActivity : AppCompatActivity() {
                 else -> throw IllegalArgumentException("Unexpected itemId")
             }
 
-            selectFragment(fragment)
+            if (selectedFragment === fragment) {
+                if (fragment is OnBottomNavigationFragmentReselectListener) {
+                    fragment.onBottomNavigationFragmentReselected()
+                }
+            } else {
+                selectFragment(fragment)
+            }
+
             true
         }
     }
@@ -105,6 +112,10 @@ class MainActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
         outState.putInt(KEY_SELECTED_INDEX, selectedIndex)
     }
+}
+
+interface OnBottomNavigationFragmentReselectListener {
+    fun onBottomNavigationFragmentReselected()
 }
 
 const val TAG_BREAKING_NEWS_FRAGMENT = "tag_breaking_news_fragment"
