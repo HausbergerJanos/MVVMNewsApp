@@ -4,10 +4,14 @@ import android.app.Application
 import androidx.room.Room
 import com.codinginflow.mvvmnewsapp.api.NewsApi
 import com.codinginflow.mvvmnewsapp.data.NewsArticleDatabase
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
@@ -16,13 +20,43 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
+    @Singleton
+    @Provides
+    fun provideGsonBuilder(): Gson {
+        return GsonBuilder()
+            .create()
+    }
+
+    @Singleton
+    @Provides
+    fun provideOkHttpClient(): OkHttpClient.Builder {
+        return OkHttpClient.Builder()
+    }
+
+    @Singleton
+    @Provides
+    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
+        val interceptor = HttpLoggingInterceptor()
+        interceptor.level = HttpLoggingInterceptor.Level.BODY
+        return interceptor
+    }
+
     @Provides
     @Singleton
-    fun provideRetrofit(): Retrofit =
-        Retrofit.Builder()
+    fun provideRetrofit(
+        gson: Gson,
+        okHttpClient: OkHttpClient.Builder,
+        loggingInterceptor: HttpLoggingInterceptor
+    ): Retrofit {
+
+        okHttpClient.addInterceptor(loggingInterceptor)
+
+        return Retrofit.Builder()
             .baseUrl(NewsApi.BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .client(okHttpClient.build())
             .build()
+    }
 
     @Provides
     @Singleton
