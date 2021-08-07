@@ -12,10 +12,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.*
 import com.codinginflow.mvvmnewsapp.OnBottomNavigationFragmentReselectListener
 import com.codinginflow.mvvmnewsapp.R
 import com.codinginflow.mvvmnewsapp.databinding.FragmentBookmarksBinding
-import com.codinginflow.mvvmnewsapp.databinding.FragmentBreakingNewsBinding
 import com.codinginflow.mvvmnewsapp.shared.NewsArticleListAdapter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -43,6 +43,8 @@ class BookmarksFragment : Fragment(R.layout.fragment_bookmarks), OnBottomNavigat
                 viewModel.onBookmarkClick(article)
             }
         )
+
+        bookmarksAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
 
         binding.apply {
             recyclerView.apply {

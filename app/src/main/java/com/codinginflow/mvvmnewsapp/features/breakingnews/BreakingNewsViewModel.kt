@@ -5,36 +5,24 @@ import androidx.lifecycle.viewModelScope
 import com.codinginflow.mvvmnewsapp.data.NewsArticle
 import com.codinginflow.mvvmnewsapp.data.NewsRepository
 import com.codinginflow.mvvmnewsapp.features.breakingnews.BreakingNewsViewModel.Event.*
-import com.codinginflow.mvvmnewsapp.features.breakingnews.BreakingNewsViewModel.Refresh.*
 import com.codinginflow.mvvmnewsapp.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltViewModel
-class BreakingNewsViewModel @Inject constructor(
+class BreakingNewsViewModel
+@Inject
+constructor(
     private val repository: NewsRepository
 ) : ViewModel() {
-    private val eventChannel = Channel<Event>()
-    val events = eventChannel.receiveAsFlow()
+    private val _stateEvents = MutableStateFlow<Event>(None)
+    val stateEvents = _stateEvents.asStateFlow()
 
-    private val refreshTriggerChannel = Channel<Refresh>()
-    private val refreshTrigger = refreshTriggerChannel.receiveAsFlow()
-
-    val breakingNews = refreshTrigger.flatMapLatest { refresh  ->
-        repository.getBreakingNews(
-            forceRefresh = refresh == FORCE,
-            onFetchSuccess = {
-                viewModelScope.launch { eventChannel.send(FetchedSuccessfully) }
-            },
-            onFetchFailed = {
-                viewModelScope.launch { eventChannel.send(ShowErrorMessage(it)) }
-            }
-        )
-    }.stateIn(viewModelScope, SharingStarted.Lazily, null)
+    private val _breakingNews = MutableStateFlow<Resource<List<NewsArticle>>?>(null)
+    val breakingNews = _breakingNews.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -45,17 +33,25 @@ class BreakingNewsViewModel @Inject constructor(
     }
 
     fun onStart() {
-        if (breakingNews.value !is Resource.Loading) {
-            viewModelScope.launch {
-                refreshTriggerChannel.send(NORMAL)
-            }
-        }
+        doRefresh(false)
     }
 
     fun onManualRefresh() {
-        if (breakingNews.value !is Resource.Loading) {
-            viewModelScope.launch {
-                refreshTriggerChannel.send(FORCE)
+        doRefresh(true)
+    }
+
+    private fun doRefresh(forceRefresh: Boolean) {
+        viewModelScope.launch {
+            repository.getBreakingNews(
+                forceRefresh,
+                onFetchSuccess = {
+                    _stateEvents.value = FetchedSuccessfully
+                },
+                onFetchFailed = {
+                    _stateEvents.value = ShowErrorMessage(it)
+                }
+            ).collect { breakingNews ->
+                _breakingNews.value = breakingNews
             }
         }
     }
@@ -68,12 +64,9 @@ class BreakingNewsViewModel @Inject constructor(
         }
     }
 
-    enum class Refresh {
-        FORCE, NORMAL
-    }
-
     sealed class Event {
         data class ShowErrorMessage(val error: Throwable) : Event()
         object FetchedSuccessfully : Event()
+        object None: Event()
     }
 }

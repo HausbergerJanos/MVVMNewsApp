@@ -12,6 +12,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.Adapter.StateRestorationPolicy.*
 import com.codinginflow.mvvmnewsapp.OnBottomNavigationFragmentReselectListener
 import com.codinginflow.mvvmnewsapp.R
 import com.codinginflow.mvvmnewsapp.databinding.FragmentBreakingNewsBinding
@@ -48,6 +50,8 @@ class BreakingNewsFragment : Fragment(R.layout.fragment_breaking_news), OnBottom
             }
         )
 
+        newsArticleAdapter.stateRestorationPolicy = PREVENT_WHEN_EMPTY
+
         binding.apply {
             recyclerView.apply {
                 adapter = newsArticleAdapter
@@ -74,7 +78,7 @@ class BreakingNewsFragment : Fragment(R.layout.fragment_breaking_news), OnBottom
             }
 
             viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-                viewModel.events.collect { event ->
+                viewModel.stateEvents.collect { event ->
                     when (event) {
                         is ShowErrorMessage -> showSnackbar(
                             message = getString(R.string.could_not_refresh,
@@ -84,6 +88,9 @@ class BreakingNewsFragment : Fragment(R.layout.fragment_breaking_news), OnBottom
                         )
                         is FetchedSuccessfully -> {
                             recyclerView.scrollToPosition(0)
+                        }
+                        else -> {
+                            // Handle it
                         }
                     }.exhaustive
                 }
@@ -103,8 +110,6 @@ class BreakingNewsFragment : Fragment(R.layout.fragment_breaking_news), OnBottom
 
     override fun onStart() {
         super.onStart()
-        viewModel.onStart()
-        viewModel.onStart()
         viewModel.onStart()
     }
 
