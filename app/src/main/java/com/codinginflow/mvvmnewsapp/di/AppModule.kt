@@ -2,6 +2,7 @@ package com.codinginflow.mvvmnewsapp.di
 
 import android.app.Application
 import androidx.room.Room
+import com.codinginflow.mvvmnewsapp.api.AuthInterceptor
 import com.codinginflow.mvvmnewsapp.api.NewsApi
 import com.codinginflow.mvvmnewsapp.data.NewsArticleDatabase
 import com.google.gson.Gson
@@ -41,14 +42,21 @@ object AppModule {
         return interceptor
     }
 
+    @Singleton
+    @Provides
+    fun provideAuthInterceptor(): AuthInterceptor =
+        AuthInterceptor()
+
     @Provides
     @Singleton
     fun provideRetrofit(
         gson: Gson,
         okHttpClient: OkHttpClient.Builder,
+        authInterceptor: AuthInterceptor,
         loggingInterceptor: HttpLoggingInterceptor
     ): Retrofit {
 
+        okHttpClient.addInterceptor(authInterceptor)
         okHttpClient.addInterceptor(loggingInterceptor)
 
         return Retrofit.Builder()
