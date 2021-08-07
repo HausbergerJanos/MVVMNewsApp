@@ -8,7 +8,8 @@ import androidx.room.RoomDatabase
         NewsArticle::class,
         BreakingNews::class,
         SearchResult::class,
-        SearchQueryRemoteKey::class
+        SearchQueryRemoteKey::class,
+        AccountProperties::class
     ], version = 1
 )
 abstract class NewsArticleDatabase : RoomDatabase() {
@@ -16,4 +17,6 @@ abstract class NewsArticleDatabase : RoomDatabase() {
     abstract fun newsArticleDao(): NewsArticleDao
 
     abstract fun searchQueryRemoteKeyDao(): SearchQueryRemoteKeyDao
+
+    abstract fun accountPropertiesDao(): AccountPropertiesDao
 }

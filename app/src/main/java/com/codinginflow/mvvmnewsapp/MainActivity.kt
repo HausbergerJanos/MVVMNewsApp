@@ -2,17 +2,31 @@ package com.codinginflow.mvvmnewsapp
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.codinginflow.mvvmnewsapp.data.AccountProperties
+import com.codinginflow.mvvmnewsapp.data.NewsArticleDatabase
 import com.codinginflow.mvvmnewsapp.databinding.ActivityMainBinding
 import com.codinginflow.mvvmnewsapp.features.bookmarks.BookmarksFragment
 import com.codinginflow.mvvmnewsapp.features.breakingnews.BreakingNewsFragment
 import com.codinginflow.mvvmnewsapp.features.searchnews.SearchNewsFragment
+import com.codinginflow.mvvmnewsapp.shared.SessionManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.launch
 import java.lang.IllegalArgumentException
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+
+    @Inject
+    lateinit var database: NewsArticleDatabase
+
+    @Inject
+    lateinit var sessionManager: SessionManager
 
     private lateinit var breakingNewsFragment: BreakingNewsFragment
     private lateinit var searchNewsFragment: SearchNewsFragment
@@ -33,6 +47,21 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Simulate insert user and get account properties from cache
+        lifecycleScope.launch(IO) {
+            val accountPropertiesDao = database.accountPropertiesDao()
+
+            accountPropertiesDao.insertAccountProperties(
+                accountProperties = AccountProperties(token = BuildConfig.NEWS_API_ACCESS_KEY)
+            )
+
+            val accountProperties = accountPropertiesDao.getAccountProperties()
+            accountProperties?.let { safeAccountProperties ->
+                // Update SessionManager
+                sessionManager.setAccountProperties(safeAccountProperties)
+            }
+        }
 
         if (savedInstanceState == null) {
             breakingNewsFragment = BreakingNewsFragment()

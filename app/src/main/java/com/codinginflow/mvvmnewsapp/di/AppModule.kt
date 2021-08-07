@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.codinginflow.mvvmnewsapp.api.AuthInterceptor
 import com.codinginflow.mvvmnewsapp.api.NewsApi
 import com.codinginflow.mvvmnewsapp.data.NewsArticleDatabase
+import com.codinginflow.mvvmnewsapp.shared.SessionManager
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -77,4 +78,9 @@ object AppModule {
         Room.databaseBuilder(app, NewsArticleDatabase::class.java, "news_article_database")
             .fallbackToDestructiveMigration()
             .build()
+
+    @Singleton
+    @Provides
+    fun provideSessionManager(authInterceptor: AuthInterceptor) =
+        SessionManager(authInterceptor)
 }

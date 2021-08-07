@@ -9,14 +9,7 @@ import javax.inject.Inject
 
 class AuthInterceptor : Interceptor {
 
-    private var token: String = ""
-
-    init {
-        GlobalScope.launch {
-            // Get data for example from cache
-            token = BuildConfig.NEWS_API_ACCESS_KEY
-        }
-    }
+    public var token: String = ""
 
     override fun intercept(chain: Interceptor.Chain): Response {
         var request = chain.request()

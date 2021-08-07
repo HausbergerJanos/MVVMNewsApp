@@ -72,7 +72,7 @@ constructor(
 
                     val oldestTimeStamp = sortedArticles.firstOrNull()?.updatedAt
 
-                    oldestTimeStamp == null || oldestTimeStamp < System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(
+                    oldestTimeStamp == null || oldestTimeStamp < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(
                         5
                     )
                 }
