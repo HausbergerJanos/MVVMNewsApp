@@ -4,6 +4,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.room.withTransaction
+import com.codinginflow.mvvmnewsapp.api.ClientPropertiesInterceptor
 import com.codinginflow.mvvmnewsapp.api.NewsApi
 import com.codinginflow.mvvmnewsapp.util.Resource
 import com.codinginflow.mvvmnewsapp.util.networkBoundResource
@@ -18,7 +19,8 @@ class NewsRepository
 @Inject
 constructor(
     private val newsApi: NewsApi,
-    private val newsArticleDb: NewsArticleDatabase
+    private val newsArticleDb: NewsArticleDatabase,
+    private val clientPropertiesInterceptor: ClientPropertiesInterceptor
 ) {
     private val newsArticleDao = newsArticleDb.newsArticleDao()
 
@@ -32,6 +34,11 @@ constructor(
                 newsArticleDao.getAllBreakingNewsArticles()
             },
             fetchFromNetwork = {
+                clientPropertiesInterceptor.addHeaderEntries(
+                    // Add "place: breakingNews" to header, and don't clear it after request
+                    (("place" to "breakingNews")) to false
+                )
+
                 val response = newsApi.getBreakingNews()
                 response.articles
             },
@@ -99,7 +106,8 @@ constructor(
                 searchQuery = query,
                 newsApi = newsApi,
                 newsArticleDb = newsArticleDb,
-                refreshOnInit = refreshOnInit
+                refreshOnInit = refreshOnInit,
+                clientPropertiesInterceptor = clientPropertiesInterceptor
             ),
             pagingSourceFactory = {
                 newsArticleDao.getSearchResultArticlesPaged(query)

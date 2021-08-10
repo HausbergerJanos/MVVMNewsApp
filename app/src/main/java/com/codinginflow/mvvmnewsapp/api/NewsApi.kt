@@ -9,6 +9,7 @@ interface NewsApi {
         const val BASE_URL = "https://newsapi.org/v2/"
     }
 
+    //@Headers("Non-Authenticated: true")
     @GET("top-headlines?country=hu&pageSize=100")
     suspend fun getBreakingNews(): NewsResponse
 

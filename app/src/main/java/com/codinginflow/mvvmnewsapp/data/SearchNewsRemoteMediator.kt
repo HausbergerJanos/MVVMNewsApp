@@ -4,6 +4,7 @@ import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import androidx.room.withTransaction
+import com.codinginflow.mvvmnewsapp.api.ClientPropertiesInterceptor
 import com.codinginflow.mvvmnewsapp.api.NewsApi
 import kotlinx.coroutines.flow.first
 import retrofit2.HttpException
@@ -15,7 +16,8 @@ class SearchNewsRemoteMediator(
     private val searchQuery: String,
     private val newsApi: NewsApi,
     private val newsArticleDb: NewsArticleDatabase,
-    private val refreshOnInit: Boolean
+    private val refreshOnInit: Boolean,
+    private val clientPropertiesInterceptor: ClientPropertiesInterceptor
 ) : RemoteMediator<Int, NewsArticle>() {
 
     private val newsArticleDao = newsArticleDb.newsArticleDao()
@@ -32,6 +34,9 @@ class SearchNewsRemoteMediator(
         }
 
         try {
+            clientPropertiesInterceptor.addHeaderEntries((("place" to "searchNews")) to false)
+            clientPropertiesInterceptor.addHeaderEntries((("language" to "hu")) to true)
+
             val response = newsApi.searchNews(
                 query = searchQuery,
                 page = page,
